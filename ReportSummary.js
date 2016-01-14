@@ -12,13 +12,21 @@ class ReportSummary {
   }
   
   function CreateSummaryJavascript() {
+    var expression = [];
+    expression.push("smtpstatus{mask:messagesent;totals:false;}");
+    expression.push("status{mask:complete,incomplete;totals:false}");
+    expression.push('[FORMULA]{expression:"IF(CELLVALUE(col, row-3)>0,(CELLVALUE(col,row-2)+CELLVALUE(col,row-1))/CELLVALUE(col,row-3),0)"}');
+    var tableJSON = _report.TableUtils.GenerateTableFromExpression("ds0", expression.join("+") + "^[BASE]", TableFormat.Json);
+    var summaryTable = eval("(" + tableJSON + ")");
+    var data = summaryTable.data;
+    var responseRate = (data[3][0].values["default"] *100).toFixed(1);
     var reportSummary = {
       ReportName: _report.Name,
       SurveyName: FindProjectIdAndName(),
-      SentInvites: "# Sent Invites",
-      Full: "# Full responses",
-      Partial: "# Partial responses",
-      ResponseRate: "ResponseRate"
+      SentInvites: data[0][0].values.basecount,
+      Full: data[1][0].values.basecount,
+      Partial: data[2][0].values.basecount,
+      ResponseRate: responseRate + "%"
     }
     var javascript = [];
     javascript.push("<script>");
@@ -27,67 +35,7 @@ class ReportSummary {
     return javascript.join("\n");
   }
   
-  function CreateSummaryText() {
-    var overViewTable = [];
-    overViewTable.push("<table>");
-    overViewTable.push("  <tbody>");
-    overViewTable.push("    <tr style='height:80px'>");
-    overViewTable.push("      <td>Report Name</td>");
-    overViewTable.push("      <td style='padding-left:50px'>");
-    overViewTable.push("        " + _report.Name);
-    overViewTable.push("      </td>");
-    overViewTable.push("    </tr>");
-    overViewTable.push("    <tr style='height:80px'>");
-    overViewTable.push("      <td>Survey</td>");
-    overViewTable.push("      <td style='padding-left:50px'>");
-    overViewTable.push("        "  + FindProjectIdAndName());
-    overViewTable.push("      </td>");
-    overViewTable.push("    </tr>");
-    overViewTable.push("    <tr style='height:80px'>");
-    overViewTable.push("      <td>Completed Surveys</td>");
-    overViewTable.push("      <td style='padding-left:50px'>");
-    overViewTable.push("        " + GetReportBase());
-    overViewTable.push("      </td>");
-    overViewTable.push("    </tr>");
-    overViewTable.push("    <tr style='height:80px'>");
-    overViewTable.push("      <td>Project Status</td>");
-    overViewTable.push("      <td style='padding-left:50px'>");
-    overViewTable.push("        " + GetProjectStatus());
-    overViewTable.push("      </td>");
-    overViewTable.push("    </tr>");
-    overViewTable.push("  </tr>");
-    overViewTable.push("</table>");
-    return overViewTable.join("\n");
-  }
-  
   function FindProjectIdAndName() {
-    return [_project.ProjectId, _project.ProjectName].join (' - ');
-  }
-  
-  function GetReportBase() {
-    var expression = '[SEGMENT]^[N]';
-    var jsonTable = _report.TableUtils.GenerateTableFromExpression(_ds, expression, TableFormat.Json);
-    var table;
-    eval('table = ' + jsonTable);
-    var base = parseInt(table.data[0][0].values.basecount);
-    var formattedBase = AddThousandsDelimiter(base);
-    return formattedBase
-  }
-  
-  private function AddThousandsDelimiter(base) {
-    return base.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-  }
-  
-  function GetProjectStatus() {
-    switch(_project.ProjectStatus) {
-      case ProjectStatus.Online:
-        return "Live";
-      case ProjectStatus.Closed:
-        return "Closed";
-      case ProjectStatus.NotStarted:
-        return "Not Started";
-      case ProjectStatus.NA:
-        return "Not applicable";
-    }
+    return _project.ProjectName + " (" + _project.ProjectId + ")";
   }
 }
