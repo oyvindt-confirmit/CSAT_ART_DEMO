@@ -24,29 +24,78 @@ class TrendTable {
   }
   
   function CreateBaseRowExpression() {
+    var numericStatisticsCode = parseInt(_statistic.Code);
     var rowExpression = _metricVariableId + MetricVariableQualifiers();
-    if(_statistic.Code == "3" || _statistic.Code == "4" || _statistic.Code == "5" || _statistic.Code == "6" || _statistic.Code == "7" || _statistic.Code == "8" ) {
+    if(numericStatisticsCode >= 3 && numericStatisticsCode <= 8) {
       var topBottomNExpression = CreateTopBottomNExpression();
       rowExpression += "/" + topBottomNExpression;
     }
-    else if(_statistic.Code == "9") {
+    else if(numericStatisticsCode == 9) {
       var npsExpression = CreateNPSExpression();
       if(npsExpression !== null) {
         rowExpression += "/" + npsExpression;
       }
     }
+    else if(numericStatisticsCode >= 100 && numericStatisticsCode < 200) {
+      var rangeGapNumber = numericStatisticsCode - 100;
+      var questionDetails = GetQuestionDetails();
+      var rangeGap = Config.RangeGaps[rangeGapNumber];
+      var rangeGapDetails = QuestionProperties.GetRangeGapDetails(_question, rangeGap);
+      if(rangeGapDetails.QuestionMatchesRangeGap) {
+        var mask = rangeGapDetails.BottomCodes.concat(rangeGapDetails.TopCodes);
+        var rowExpressionSegments = [];
+        rowExpressionSegments.push(GetMaskedCategoriesSet(mask, CategoriesId, true, false));
+        rowExpressionSegments.push(CreateFormulaHeader(false));
+        rowExpression += "/" + "(" + rowExpressionSegments.join("+") + ")"; 
+      }
+      else {
+       	throw new Exception("Question does not have scores compatible with the range gap. Table cannot be produced."); 
+      }
+    }
+    else if(numericStatisticsCode >= 200 && numericStatisticsCode < 300) {
+      var rangeNumber = numericStatisticsCode - 200;
+      var questionDetails = GetQuestionDetails();
+      var range = Config.Ranges[rangeNumber];
+      var rangeDetails = QuestionProperties.GetRangeDetails(_question, range);
+      if(rangeDetails.QuestionMatchesRange) {
+        var mask = rangeDetails.Codes;
+        var rowExpressionSegments = [];
+        rowExpressionSegments.push(GetMaskedCategoriesSet(mask, CategoriesId, true, false));
+        rowExpressionSegments.push(CreateFormulaHeader(true));
+        rowExpression += "/" + "(" + rowExpressionSegments.join("+") + ")";
+      }
+      else {
+       	throw new Exception("Question does not have scores compatible with the range. Table cannot be produced."); 
+      }
+    }
     return rowExpression;
   }
   
+  private function GetQuestionDetails() {
+    var parts = _metricVariableId.split('.');
+    var code = (parts.length > 1) ? parts[1] : null;
+    var sortedScoredScales = QuestionProperties.GetSortedScoredScales(_question);
+    var questionDetails = {
+      VariableId: _question.QuestionId,
+      Question: _question,
+      Code: code,
+      SortedScoredScales: sortedScoredScales
+    };
+    return questionDetails;    
+  }
+  
   private function MetricVariableQualifiers() {
-    if(_statistic.Code == "1") {
+    if(_statistic.Code == 1) {
       return '{collapsed:true;defaultstatistics:avg}';
     }
-    else if(_statistic.Code == "0") {
+    else if(_statistic.Code == 0) {
       return '{collapsed:true;defaultstatistics:count}';
     }
-    else {
+    else if(_statistic.Code == 2) {
       return '{collapsed:true;defaultstatistics:stdev}';
+    }
+    else {
+      return '{collapsed:true}';
     }
   }
     
@@ -59,29 +108,12 @@ class TrendTable {
   }               
   
   private function FindTopAndBottom3ScoredItems() {
-    var scoredItems = GetScoredItems();
+    var scoredItems = QuestionProperties.GetScoredItems(_question);
     var sortedScoredItems = scoredItems.sort(Sorting.ByScoreAscending);
     return [sortedScoredItems[0].Code, sortedScoredItems[1].Code, sortedScoredItems[2].Code,
             sortedScoredItems[sortedScoredItems.length-3].Code, sortedScoredItems[sortedScoredItems.length-2].Code, sortedScoredItems[sortedScoredItems.length-1].Code];
   }
-  
-  private function GetScoredItems() {
-    var items;
-    if(_question.QuestionType == QuestionType.Grid) {
-      items = _question.Scale;
-    }
-    else {
-      items = _question.Answers;
-    }
-    var scoredItems = [];
-    for(var i = 0; i < items.length; ++i) {
-      if(items[i].Score != null) {
-        scoredItems.push(items[i]);
-      }
-    }
-    return scoredItems;
-  }
-  
+   
   private function GetMaskedCategoriesSet(codeSet, id, hideData, totals) {
     var maskedCategories = [];
     for(var i = 0; i < codeSet.length; i++) {
@@ -100,20 +132,21 @@ class TrendTable {
   }
   
   private function GetFormulaExpression() {
+    _log.LogDebug("_statistic.Code: " + _statistic.Code);
     switch(_statistic.Code) {
-      case "3":
+      case 3:
         return "(CELLVALUE(col,row-2) + CELLVALUE(col, row-1))/100";
-      case "4":
+      case 4:
         return "(CELLVALUE(col,row-3) + CELLVALUE(col,row-2) + CELLVALUE(col, row-1))/100";
-      case "5":
+      case 5:
         return "(CELLVALUE(col,row-6) + CELLVALUE(col, row-5))/100";
-      case "6":
+      case 6:
         return "(CELLVALUE(col,row-6) + CELLVALUE(col, row-5) + CELLVALUE(col, row-4))/100";
-      case "7":
+      case 7:
         return "CELLVALUE(col, row-1)/100";
-      case "8":
+      case 8:
         return "CELLVALUE(col,row-6)/100";
-      case "9":
+      case 9:
         if(_npsScaleDetails.IsNPSScale) {
           if(_npsScaleDetails.ScaleLength == 10) {
             return "(CELLVALUE(col,row-1)+CELLVALUE(col,row-2))-(CELLVALUE(col,row-3)+CELLVALUE(col,row-4)+CELLVALUE(col,row-5)+CELLVALUE(col,row-6)+CELLVALUE(col,row-7)+CELLVALUE(col,row-8))";
@@ -124,54 +157,49 @@ class TrendTable {
         }
         break;
     }
+    if(_statistic.Code >= 100 && _statistic.Code < 200) {
+      var rangeGap = Config.RangeGaps[_statistic.Code - 100];
+      var offset = 1;
+      var topFormula = [];
+      var bottomFormula = [];
+      var topLength = rangeGap.Top.Max - rangeGap.Top.Min;
+      for(var i = 0; i <= topLength; ++i) {
+        topFormula.push("CELLVALUE(col,row-" + offset + ")");
+        offset += 1;
+      }
+      var bottomLength = rangeGap.Bottom.Max - rangeGap.Bottom.Min;
+      for(var i = 0; i <= bottomLength; ++i) {
+        bottomFormula.push("CELLVALUE(col,row-" + offset + ")");
+        offset += 1;
+      }      
+      return "(" + topFormula.join("+") + ")-(" + bottomFormula.join("+") + ")";
+    }    
+    else if(_statistic.Code >= 200 && _statistic.Code < 300) {
+      var range = Config.Ranges[_statistic.Code - 200];
+      var offset = 1;
+      var formula = [];
+      var topLength = range.Max - range.Min;
+      for(var i = 0; i <= topLength; ++i) {
+        formula.push("CELLVALUE(col,row-" + offset + ")");
+        offset += 1;
+      }     
+      return "(" + formula.join("+") + ")/100";
+    }
   }
   
   private function CreateNPSExpression() {
-    var scoredItems = GetScoredItems();
-    IsNPSScale(scoredItems);
+    _npsScaleDetails = QuestionProperties.IsNPSQuestion(_question);
     if(_npsScaleDetails.IsNPSScale) {
-      var sortedScoredItems = scoredItems.sort(Sorting.ByScoreAscending);
-      var mask;
-      if(sortedScoredItems.length == 11) {
-        mask = [sortedScoredItems[0].Code, sortedScoredItems[1].Code, sortedScoredItems[2].Code, sortedScoredItems[3].Code, sortedScoredItems[4].Code, 
-                sortedScoredItems[5].Code, sortedScoredItems[6].Code, sortedScoredItems[9].Code, sortedScoredItems[10].Code];
-      }
-      else if(sortedScoredItems.length == 10) {
-        mask = [sortedScoredItems[0].Code, sortedScoredItems[1].Code, sortedScoredItems[2].Code, sortedScoredItems[3].Code, sortedScoredItems[4].Code, 
-                sortedScoredItems[5].Code, sortedScoredItems[8].Code, sortedScoredItems[9].Code];
-      }
+      var mask = _npsScaleDetails.DetractorCodes.concat(_npsScaleDetails.PromotorCodes);
       var rowExpressionSegments = [];
       rowExpressionSegments.push(GetMaskedCategoriesSet(mask, CategoriesId, true, false));
       rowExpressionSegments.push(CreateFormulaHeader(false));
       return "(" + rowExpressionSegments.join("+") + ")";
     }
-    return null;
-  }
-  
-  private function IsNPSScale(scoredItems) {  
-    if(scoredItems.length == 10) {
-      _npsScaleDetails = {ScaleLength: 10};
-      _npsScaleDetails.IsNPSScale = true;
-      for(var i = 0; i < scoredItems.length; i++) {
-        if(scoredItems[i].Score != i+1) {
-          _npsScaleDetails.IsNPSScale = false;
-          break;
-        }
-      }  
-    }
-    else if(scoredItems.length == 11) {
-      _npsScaleDetails = {ScaleLength: 11};
-      _npsScaleDetails.IsNPSScale = true;
-      for(var i = 0; i < scoredItems.length; i++) {
-        if(scoredItems[i].Score != i) {
-          _npsScaleDetails.IsNPSScale = false;
-          break;
-        }
-      }
-    }
     else {
-      throw new Exception("Question does not have NPS compatible scores");
+       	throw new Exception("Question does not have NPS compatible scores. Table cannot be produced."); 
     }
+    return null;
   }
   
   function SetFormulasFirstOnCategories(formulasFirst) {

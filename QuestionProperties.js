@@ -51,8 +51,7 @@ class QuestionProperties {
           break;
       }
     }
-  }
-  
+  }  
   
   private static function AnswerListMaxAndMinScores(answers) {
     var max = answers[0].Score;
@@ -120,12 +119,8 @@ class QuestionProperties {
     }
     return {IsNPSScale: false};
   }
-  
-  static function GetSortedScoredItems() {
-    
-  }
-  
-  private function GetSortedScoredScales(question) {
+   
+  static function GetSortedScoredScales(question) {
     var scoredScales = GetScoredItems(question);
     return scoredScales.sort(Sorting.ByScoreAscending);
   }
@@ -145,5 +140,72 @@ class QuestionProperties {
       }
     }
     return scoredItems;
+  }
+  
+  /*
+  static function FindRangeGapCodes(questionDetails, rangeGap) {
+    var topCodes = [];
+    var bottomCodes = [];
+    for(var i = 0; i < questionDetails.SortedScoredScales.length; ++i) {
+      var scale = questionDetails.SortedScoredScales[i];
+      if(scale.Score >= rangeGap.Top.Min && scale.Score <= rangeGap.Top.Max) {
+        topCodes.push(scale.Code);
+      }
+      if(scale.Score >= rangeGap.Bottom.Min && scale.Score <= rangeGap.Bottom.Max) {
+        bottomCodes.push(scale.Code);
+      }
+    }
+    if(topCodes.length == 0 || bottomCodes.length == 0) {
+      rangeGap.QuestionMatchesRangeGap = false;
+    }
+    else {
+      rangeGap.TopCodes = topCodes;
+      rangeGap.BottomCodes = bottomCodes;
+      rangeGap.QuestionMatchesRangeGap = true;
+    }
+    return rangeGap;
+  }*/
+  
+  static function GetRangeGapDetails(question, rangeGap) {
+    var sortedScoredScales = GetSortedScoredScales(question);
+    var topCodes = [];
+    var bottomCodes = [];
+    for(var i = 0; i < sortedScoredScales.length; ++i) {
+      var scale = sortedScoredScales[i];
+      if(scale.Score >= rangeGap.Top.Min && scale.Score <= rangeGap.Top.Max) {
+        topCodes.push(scale.Code);
+      }
+      if(scale.Score >= rangeGap.Bottom.Min && scale.Score <= rangeGap.Bottom.Max) {
+        bottomCodes.push(scale.Code);
+      }
+    }
+    if(topCodes.length == 0 || bottomCodes.length == 0) {
+      rangeGap.QuestionMatchesRangeGap = false;
+    }
+    else {
+      rangeGap.TopCodes = topCodes;
+      rangeGap.BottomCodes = bottomCodes;
+      rangeGap.QuestionMatchesRangeGap = true;
+    }
+    return rangeGap;
+  }
+  
+  static function GetRangeDetails(question, range) {
+    var sortedScoredScales = GetSortedScoredScales(question) 
+    var codes = [];
+    for(var i = 0; i < sortedScoredScales.length; ++i) {
+      var scale = sortedScoredScales[i];
+      if(scale.Score >= range.Min && scale.Score <= range.Max) {
+        codes.push(scale.Code);
+      }
+    }
+    if(codes.length == 0) {
+      range.QuestionMatchesRange = false;
+    }
+    else {
+      range.Codes = codes;
+      range.QuestionMatchesRange = true;
+    }
+    return range;
   }
 }

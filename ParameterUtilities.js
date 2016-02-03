@@ -21,8 +21,7 @@ class ParameterUtilities {
   //   * Nothing returned
   //
   static function LoadParameterValues(report, parameter, parameterValues) {
-    for (var i=0; i<parameterValues.length; ++i) 
-    {   
+    for (var i=0; i<parameterValues.length; ++i) {   
       var parameterValueResponse : ParameterValueResponse = new ParameterValueResponse(); 
       parameterValueResponse.StringKeyValue = parameterValues[i].Code;
       
@@ -58,19 +57,16 @@ class ParameterUtilities {
   // Returns:
   //   * The object matching the currently selected code from the parameter.
   //
-  function Selected(dataSourceNodeId : String, parameterName : String)
-  {
+  function Selected(dataSourceNodeId, parameterName) {
     var parameterValues = GetParameterList(dataSourceNodeId, parameterName);
     var currentCode = GetParameterCode(parameterName);
-    for(var i = 0; i < parameterValues.length; i++)
-    {
+    for(var i = 0; i < parameterValues.length; i++) {
       if(parameterValues[i].Code == currentCode)
         return parameterValues[i];    
     }
   }
 
-  function Selected(parameterName : String)
-  {
+  function Selected(parameterName) {
     var parameterValues = ParameterLists.GetParameterValues(parameterName, _report, _log);
     var currentCode = GetParameterCode(parameterName);
     for(var i = 0; i < parameterValues.length; i++) {
@@ -80,7 +76,7 @@ class ParameterUtilities {
     }
   }
   
-  function Contains(parameterName : String, code) {
+  function Contains(parameterName, code) {
   	var codes = GetParameterCodes(parameterName);
     for (var i = 0; i < codes.length; ++i) {
       if (codes[i].toUpperCase() == code.toUpperCase()) {
@@ -134,13 +130,16 @@ class ParameterUtilities {
   function GetParameterCodes(parameterName : String) : String[] {
     var parameterValues : ParameterValueMultiSelect = _state.Parameters[parameterName];
     var codes = [];
-    if (parameterValues != null) {
+    if(parameterValues != null) {
       for (var enumerator : Enumerator = new Enumerator(parameterValues) ; !enumerator.atEnd(); enumerator.moveNext()) {
         var parameterValue : ParameterValueResponse = enumerator.item();
-        codes.push (parameterValue.StringKeyValue);
+        codes.push(parameterValue.StringKeyValue);
       }
+      return codes;
     }
-    return codes;
+    else {
+      return null;
+    }    
   }
   
   function GetParameterDecimal(parameterName : String, defaultValue) {
@@ -148,7 +147,7 @@ class ParameterUtilities {
       return decimal.ToDouble(_state.Parameters.GetDecimal(parameterName));
     }
     else {
-      if(defaultValue != null) {
+      if(defaultValue && defaultValue != null) {
         return defaultValue;
       }
       return null;
@@ -160,7 +159,7 @@ class ParameterUtilities {
       return _state.Parameters.GetString(parameterName);
     }
     else {
-      if(defaultValue != null) {
+      if(defaultValue && defaultValue != null) {
         return defaultValue;
       }
       return null;

@@ -24,10 +24,10 @@ class TimeSeriesHeader {
     var headerQuestion : HeaderQuestion = TableUtil.GetHeaderById(_table, TimeVariableHeaderId);
     headerQuestion.TimeSeries.Time1 = TimeseriesTimeUnitType.Year;
     headerQuestion.TimeSeries.Time2 = GetTimeseriesUnit();
-    if(_trendUnit.Unit == RollingUnitType.Day) {
+    if(_trendUnit != null && _trendUnit.Unit == RollingUnitType.Day) {
       headerQuestion.TimeSeries.Time3 = TimeseriesTimeUnitType.DayOfMonth;
     }
-    if (_trendInterval.Interval != null) {
+    if(_trendInterval != null && _trendInterval.Interval != null) {
       var rollingTimeSeries = CreateRollingTimeSeries();
       headerQuestion.TimeSeries.RollingTimeseries = rollingTimeSeries;
     }
@@ -35,6 +35,7 @@ class TimeSeriesHeader {
   }
   
   function GetTimeseriesUnit() {
+    if(_trendUnit != null) {
     switch(_trendUnit.Unit) {
       case RollingUnitType.Year:
         return TimeseriesTimeUnitType.Undefined; 
@@ -47,7 +48,11 @@ class TimeSeriesHeader {
       case RollingUnitType.Day:
         return TimeseriesTimeUnitType.Month;
       default:
-        return null;    
+        return TimeseriesTimeUnitType.Week;    
+    }
+    }
+    else {
+      return TimeseriesTimeUnitType.Week;
     }
   }
   
@@ -64,5 +69,11 @@ class TimeSeriesHeader {
     var headerQuestion : HeaderQuestion = TableUtil.GetHeaderById(_table, TimeVariableHeaderId);
     headerQuestion.TimeSeries.FlatLayout = true;
     headerQuestion.TimeSeries.ReverseOrder = true;
+  }
+  
+  function SetDateFormatForWeeks() {
+    if(_trendUnit == null || _trendUnit.Code === '1') {
+      TableUtil.UpdateDateFormatByTable(_table, _log);
+    }
   }
 }

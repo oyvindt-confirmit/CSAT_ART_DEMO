@@ -32,7 +32,8 @@ class CrosstabTable {
       Totals: _parameterUtilities.Selected('TOTALS').Totals,
       Statistics: _parameterUtilities.Selected('STATS').Statistics,
       SigTesting: _parameterUtilities.Selected('SIGTEST'),
-      Trend: _parameterUtilities.Selected('CROSSTAB_TRENDING')
+      Trend: _parameterUtilities.Selected('CROSSTAB_TRENDING'),
+      IndividualScores: _parameterUtilities.GetParameterCode('CROSSTAB_INDIVIDUAL_SCORES')
     }
     return tableOptions;
   }
@@ -78,7 +79,14 @@ class CrosstabTable {
   private function CreateRowQuestionExpression(selectedQuestion)
   {
     var questionId = selectedQuestion.split('.')[0];
-	var question = _metaData.GetQuestion(Config.DS_Main, questionId, true);
+    var question = _metaData.GetQuestion(Config.DS_Main, questionId, true);
+    var rowQuestionIdentifier;
+    if(question.QuestionType == QuestionType.Grid) {
+      rowQuestionIdentifier = selectedQuestion;
+    }
+    else {
+      rowQuestionIdentifier = selectedQuestion.split('.')[0]
+    }	
     var questionHeaderProperties = [];
     questionHeaderProperties.push ('title:true');
 	questionHeaderProperties.push ('totals:' + _tableOptions.Totals);
@@ -86,10 +94,25 @@ class CrosstabTable {
     if(_tableOptions.Statistics && QuestionProperties.HasScores(question)) {
       questionHeaderProperties.push("statistics:avg,stdev");
     }
-    if(question.QuestionType == QuestionType.Grid) {
-      questionHeaderProperties.push("mask:" + selectedQuestion.split('.')[1]);
+    if(_tableOptions.IndividualScores == "2") {
+      questionHeaderProperties.push(MaskOutAllAnswers(question));
     }
-	return questionId + '{' + questionHeaderProperties.join(';') + '}';
+	return rowQuestionIdentifier + '{' + questionHeaderProperties.join(';') + '}';
+  }
+  
+  private function MaskOutAllAnswers(question) {
+    var maskCodes = [];
+    var answers;
+    if(question.QuestionType === QuestionType.Grid) {
+      answers = question.Scale;
+    }
+    else {
+      answers = question.Answers;
+    }
+    for(var i = 0; i < answers.length; ++i) {
+      maskCodes.push(answers[i].Code);
+    }
+    return "xmask:" + maskCodes.join(",");
   }
   
   private function CollapseQuestion(question) {
@@ -148,7 +171,7 @@ class CrosstabTable {
     var baseOn = _tableOptions.Base.N;
     if (baseOn) {
       var expression = "CELLVALUE(col-1,row)";
-      return "(" + "[N]{hidedata:true}+[FORMULA]{label:\"n\";decimals:0';expression:\"" + expression + "\"}+[SEGMENT]{label:\"Pct\"}" + ")";
+      return "(" + "[N]{hidedata:true}+[FORMULA]{label:\"n\";decimals:0;expression:\"" + expression + "\"}+[SEGMENT]{label:\"Pct\"}" + ")";
     }
     return null;
   }

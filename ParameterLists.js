@@ -16,6 +16,7 @@ class ParameterLists {
         return QuestionBasedParameterLists.GetParameterValues(parameterName, report, log);
       case "BASE":
       case "CROSSTAB_TRENDING":
+      case "CROSSTAB_INDIVIDUAL_SCORES":
       case "DECIMALS":
       case "RESPONSERATE_LABELS":
       case "TRENDLABELS":
@@ -30,7 +31,7 @@ class ParameterLists {
       case "TRENDPAGE_INTERVAL":
       case 'TRENDPAGE_STATISTIC':
       case 'TRENDPAGE_UNIT':
-        return FixedParameterLists.GetParameterValues(parameterName);
+        return FixedParameterLists.GetParameterValues(parameterName, log);
     }   
   }  
 }

@@ -1,6 +1,7 @@
-public class Config 
-{ 
+public class Config { 
+  
   static var DS_Main = "ds0";
+  static var CustomerLogo = null;
   static var CustomDateFormat = 'dd-MMM-yyyy';  
   static var DateVariableId = 'interview_start';
   static var Time = {
@@ -14,12 +15,22 @@ public class Config
   static var VariablesToPutAtEndOfList = ["status","lastchannel","lastdevicetype","lastrenderingmode","first_question_on_last_page_displayed"];
   static var RangeGaps = [{
       Label: "My Range Gap",
-      Minuend: {Min: 8, Max: 9},
-      Subtrahend: {Min: 0, Max: 4}
+      Top: {Min: 8, Max: 9},
+      Bottom: {Min: 0, Max: 4}
     },{
       Label: "My Other Range Gap",
-      Minuend: {Min: 4, Max: 5},
-      Subtrahend: {Min: 1, Max: 2}     
+      Top: {Min: 4, Max: 5},
+      Bottom: {Min: 1, Max: 2}     
+    }
+  ];
+  static var Ranges = [{
+      Label: "Range 6-9", 
+      Max: 9,
+      Min: 6
+    },{
+      Label: "Range 1-5",
+      Max: 5,
+      Min: 1     
     }
   ];
   static var Positioning = {
@@ -27,20 +38,21 @@ public class Config
     Quadrants: {
       UpperLeft: {
         Label: "Upper Left",
-        Color: "#F9E9D9"
+        Color: "#FEE6C2"
       },
       UpperRight: {
         Label: "Upper Right",
-        Color: "#EFF3DA"
+        Color: "#DFEFC4"
       },
       LowerLeft: {
         Label: "Lower Left",
-        Color: "#D8EAF3"
+        Color: "#F9D0D8"
       },
       LowerRight: {
         Label: "Lower Right",
-        Color: "#D9F7F2"
+        Color: "#D1E5F8"
       }     
     }
   }
+  static var ResponseRateDetailsOnOverview = true;
 }

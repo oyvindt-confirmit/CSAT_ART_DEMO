@@ -23,8 +23,8 @@ class ComparativeRatingSummaryHiddenTable {
     for (var i = 0; i < metrics.length; ++i) {
       var nestedHeaders = summaryCommon.CreateNestedHeaders();
 	  var statisticsHeaders = CreateStatisticsHeaders(metrics[i]);
-      nestedHeaders.push ('(' + statisticsHeaders + ')');
-      rowsExpression.push ( metrics[i] + '{collapsed:true;totals:true;title:true}/' + nestedHeaders.join('/') );
+      nestedHeaders.push('(' + statisticsHeaders + ')');
+      rowsExpression.push( metrics[i] + '{collapsed:true;totals:true;title:true}/' + nestedHeaders.join('/') );
     }
     return rowsExpression.join('+');
   }
@@ -48,7 +48,14 @@ class ComparativeRatingSummaryHiddenTable {
     statisticsHeaders.push(Bottom2Expression(questionDetails));	
     statisticsHeaders.push(Bottom3Expression(questionDetails));
     statisticsHeaders.push(NPSExpression(questionDetails));
-    statisticsHeaders.push(RangeGapExpression(questionDetails));
+    var rangeGapExpression = RangeGapExpression(questionDetails);
+    if(rangeGapExpression !== null) {
+      statisticsHeaders.push(rangeGapExpression);
+    }
+    var rangeExpression = RangeExpression(questionDetails);
+    if(rangeExpression !== null) {
+      statisticsHeaders.push(rangeExpression);
+    }
     return statisticsHeaders.join('+');
   }
   
@@ -57,7 +64,7 @@ class ComparativeRatingSummaryHiddenTable {
     var questionId = parts[0];
     var code = (parts.length > 1) ? parts[1] : null;
     var question = _metaData.GetQuestion(Config.DS_Main, questionId, true);
-    var sortedScoredScales = GetSortedScoredScales(question);
+    var sortedScoredScales = QuestionProperties.GetSortedScoredScales(question);
     var questionDetails = {
       VariableId: question.QuestionId,
       Question: question,
@@ -65,22 +72,6 @@ class ComparativeRatingSummaryHiddenTable {
       SortedScoredScales: sortedScoredScales
     };
     return questionDetails;    
-  }
-  
-  private function GetSortedScoredScales(question) {
-    var scales = (question.QuestionType == QuestionType.Grid) ? question.Scale : question.Answers;
-    var scoredScales = GetScoredScales(scales);
-    return scoredScales.sort(Sorting.ByScoreAscending);
-  }
-  
-  private function GetScoredScales(scales) {
-    var scoredScales = [];
-    for (var i = 0; i < scales.length; ++i) {
-      if (scales[i].Score != null) {
-        scoredScales.push (scales[i]);
-      }
-    }
-    return scoredScales
   }
   
   private function GetCodesFromAnswers(answers) {
@@ -196,7 +187,7 @@ class ComparativeRatingSummaryHiddenTable {
         var offset = 19 + (i*3);
         if(_parameterUtilities.Contains('SCORECARD_STATISTICS', id)) {
           var rangeGap = Config.RangeGaps[i];
-          var rangeGapCodes = FindRangeGapCodes(questionDetails, rangeGap);
+          var rangeGapCodes = QuestionProperties.GetRangeGapDetails(questionDetails.Question, rangeGap, _log);
           if(rangeGapCodes.QuestionMatchesRangeGap) {
             rangeGapExpression.push(RangeGapSegmentExpression(questionDetails, rangeGapCodes, offset));
           }
@@ -210,32 +201,40 @@ class ComparativeRatingSummaryHiddenTable {
       }
       return rangeGapExpression.join("+");
     }
-    return "";
-  }  
-                
-  private function FindRangeGapCodes(questionDetails, rangeGap) {
-    var minuendCodes = [];
-    var subtrahendCodes = [];
-    for(var i = 0; i < questionDetails.SortedScoredScales.length; ++i) {
-      var scale = questionDetails.SortedScoredScales[i];
-      if(scale.Score >= rangeGap.Minuend.Min && scale.Score <= rangeGap.Minuend.Max) {
-        minuendCodes.push(scale.Code);
-      }
-      if(scale.Score >= rangeGap.Subtrahend.Min && scale.Score <= rangeGap.Subtrahend.Max) {
-        subtrahendCodes.push(scale.Code);
-      }
-    }
-    if(minuendCodes.length == 0 || subtrahendCodes.length == 0) {
-      rangeGap.QuestionMatchesRangeGap = false;
-    }
-    else {
-      rangeGap.MinuendCodes = minuendCodes;
-      rangeGap.SubtrahendCodes = subtrahendCodes;
-      rangeGap.QuestionMatchesRangeGap = true;
-    }
-    return rangeGap;
+    return null;
   }
-  
+ 
+  private function RangeExpression(questionDetails) {
+    if(Config.Ranges !== null && Config.Ranges.length > 0) {
+      var rangeExpression = [];
+      for(var i = 0; i < Config.Ranges.length; ++i) {
+        var id = (200 + i).toString();
+        var offset;
+        if(Config.RangeGaps != null) {
+          offset = 18 + (Config.RangeGaps.length*3) + (i*2);
+        }
+        else {
+          offset = 18 + (i*2);
+        }
+        if(_parameterUtilities.Contains('SCORECARD_STATISTICS', id)) {
+          var range = Config.Ranges[i];
+          var rangeCodes = QuestionProperties.GetRangeDetails(questionDetails.Question, range, _log);
+          if(rangeCodes.QuestionMatchesRange) {
+            rangeExpression.push(RangeSegmentExpression(questionDetails, rangeCodes, offset));
+          }
+          else {
+            rangeExpression.push(TwoDummyRows());
+          }
+        }
+        else {
+          rangeExpression.push(TwoDummyRows());
+        }
+      }
+      return rangeExpression.join("+");
+    }
+    return null;
+  }
+                
   private function SegmentExpression(analysis, label, codes, offset) {
     var segmentExpression = [];
     var filter = CreateFilter(codes, analysis);
@@ -259,18 +258,29 @@ class ComparativeRatingSummaryHiddenTable {
     segmentExpression.push('[SEGMENT]{hidedata:false;label:"Detractors";expression:' + _report.TableUtils.EncodeJsString(detractorFilter) + '}/[N]{hidedata:false}');
     segmentExpression.push('[SEGMENT]{hidedata:false;label:"Promotors";expression:' + _report.TableUtils.EncodeJsString(promotorFilter) + '}/[N]{hidedata:false}');
     var formulaExpression = 'IF(CELLV(col, row-16)=0, EMPTYV(), ((CELLVALUE(col,row-1)/CELLVALUE(col,row-16))*100)-((CELLVALUE(col,row-2)/CELLVALUE(col,row-16))*100))';
-    segmentExpression.push('[FORMULA]{hidedata:false;percent:false;label:"NPS";expression:' + _report.TableUtils.EncodeJsString(formulaExpression) + '}');
+    segmentExpression.push('[FORMULA]{hidedata:false;percent:false;label:"NPS ®";expression:' + _report.TableUtils.EncodeJsString(formulaExpression) + '}');
     return segmentExpression.join("+");
   }
   
   private function RangeGapSegmentExpression(questionDetails, rangeGap, offset) {
-    var subtrahendFilter = CreateFilter(rangeGap.SubtrahendCodes, questionDetails);
-    var minuendFilter = CreateFilter(rangeGap.MinuendCodes, questionDetails);
+    _log.LogDebug("RangeGapSegmentExpression offset: " + offset);
+    var bottomFilter = CreateFilter(rangeGap.BottomCodes, questionDetails);
+    var topFilter = CreateFilter(rangeGap.TopCodes, questionDetails);
     var segmentExpression = [];
-    segmentExpression.push('[SEGMENT]{hidedata:false;label:"Detractors";expression:' + _report.TableUtils.EncodeJsString(subtrahendFilter) + '}/[N]{hidedata:false}');
-    segmentExpression.push('[SEGMENT]{hidedata:false;label:"Promotors";expression:' + _report.TableUtils.EncodeJsString(minuendFilter) + '}/[N]{hidedata:false}');
+    segmentExpression.push('[SEGMENT]{hidedata:false;label:"Detractors";expression:' + _report.TableUtils.EncodeJsString(bottomFilter) + '}/[N]{hidedata:false}');
+    segmentExpression.push('[SEGMENT]{hidedata:false;label:"Promotors";expression:' + _report.TableUtils.EncodeJsString(topFilter) + '}/[N]{hidedata:false}');
     var formulaExpression = 'IF(CELLV(col, row-' + offset + ')=0, EMPTYV(), ((CELLVALUE(col,row-1)/CELLVALUE(col,row-' + offset + '))*100)-((CELLVALUE(col,row-2)/CELLVALUE(col,row-' + offset + '))*100))';
     segmentExpression.push('[FORMULA]{hidedata:false;percent:false;label:"' + rangeGap.Label + '";expression:' + _report.TableUtils.EncodeJsString(formulaExpression) + '}');
+    return segmentExpression.join("+");
+  }
+  
+  private function RangeSegmentExpression(questionDetails, range, offset) {
+    _log.LogDebug("RangeSegmentExpression offset: " + offset);
+    var filter = CreateFilter(range.Codes, questionDetails);
+    var segmentExpression = [];
+    segmentExpression.push('[SEGMENT]{hidedata:false;label:"' + range.Label + '";expression:' + _report.TableUtils.EncodeJsString(filter) + '}/[N]{hidedata:false}');
+    var formulaExpression = 'IF(CELLV(col, row-' + offset + ')=0, EMPTYV(), ((CELLVALUE(col,row-1)/CELLVALUE(col,row-' + offset + '))))';
+    segmentExpression.push('[FORMULA]{hidedata:false;percent:true;label:"' + range.Label + '";expression:' + _report.TableUtils.EncodeJsString(formulaExpression) + '}');
     return segmentExpression.join("+");
   }
   

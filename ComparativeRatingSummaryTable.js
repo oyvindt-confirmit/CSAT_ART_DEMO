@@ -5,7 +5,7 @@ class ComparativeRatingSummaryTable {
   
   function ComparativeRatingSummaryTable(report, parameterUtilities, log) {
     _parameterUtilities = parameterUtilities;
-    _values = report.TableUtils.GetColumnValues("SummaryHidden", 1);
+    _values = report.TableUtils.GetColumnValues("SummaryHiddenTable", 1);
     _log = log;
   } 
   
@@ -102,7 +102,7 @@ class ComparativeRatingSummaryTable {
         hiddenTableRow: 19,
         decimals: 1,
         percent: false,
-        label: "NPS &reg;"
+        label: "NPS®"
       }
     ];
     var totalNumberOfRows = 19;
@@ -116,6 +116,19 @@ class ComparativeRatingSummaryTable {
           decimals: 1,
           percent: false,
           label: Config.RangeGaps[i].Label
+        });        
+      }
+    }
+    if(Config.Ranges !== null && Config.Ranges.length > 0) {
+      for(var i = 0; i < Config.Ranges.length; ++i) {
+        totalNumberOfRows += 2;
+        var id = (200 + i).toString();
+        tableHeaderDefinitions.push({
+          statisticsNumber: id,
+          hiddenTableRow: totalNumberOfRows,
+          decimals: 1,
+          percent: true,
+          label: Config.Ranges[i].Label
         });        
       }
     }

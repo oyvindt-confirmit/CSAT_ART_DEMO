@@ -1,14 +1,26 @@
 class ResponseRateTable {
+  private var _table;
+  private var _report;
   private var _timeseriesHeader;
   private var _log;
   
-  function ResponseRateTable(timeseriesHeader, log) {
+  private const ResponseRateTableName = "ResponseRateTable";
+  private const TrendDateVariable = "CreatedDate";
+  
+  function ResponseRateTable(table, report, timeseriesHeader, log) {
+    _table = table;
+    _report = report;
     _timeseriesHeader = timeseriesHeader;
     _log = log;
   }
   
+  function CreateResponseRateTable() {
+    var tableExpression = CreateResponseRateTableExpression();
+    _table.AddHeaders(_report, Config.DS_Main, tableExpression);
+  }
+  
   function CreateResponseRateTableExpression() {
-    var rowExpression = _timeseriesHeader.CreateBaseTimeseriesExpression(true, "CreatedDate");
+    var rowExpression = _timeseriesHeader.CreateBaseTimeseriesExpression(true, TrendDateVariable);
     var columnExpression = [];
     columnExpression.push('smtpstatus{mask:messagesent;total:false}');
     columnExpression.push('[SEGMENT]{label:"No Response";expression:"IN(status,\\\"notanswered\\\",\\\"quotafull\\\",\\\"error\\\")"}');
@@ -21,8 +33,13 @@ class ResponseRateTable {
     return rowExpression + "^" + columnExpression.join("+");
   }
   
+  function CreateResponseRateTableForChart() {
+    var tableExpression = CreateResponseRateTableForChartExpression();
+    _table.AddHeaders(_report, Config.DS_Main, tableExpression);
+  }
+  
   function CreateResponseRateTableForChartExpression() {
-    var rowExpression = _timeseriesHeader.CreateBaseTimeseriesExpression(true, "CreatedDate");
+    var rowExpression = _timeseriesHeader.CreateBaseTimeseriesExpression(true, TrendDateVariable);
     var columnExpression = [];
     columnExpression.push('smtpstatus{mask:messagesent;total:false}');
     columnExpression.push('[CONTENT]{percent:true;label:"Response Rate"}');
@@ -32,5 +49,14 @@ class ResponseRateTable {
   function PostTableGenerationProcessing() {
     _timeseriesHeader.SetTimeUnitAndTrending();
     _timeseriesHeader.SetReversedAndFlatLayout();
+    _timeseriesHeader.SetDateFormatForWeeks();
+  }
+  
+  function SetResponseRateTableForChartValues() {
+    var hc: HeaderContent = _table.ColumnHeaders[1];
+    var colValues = _report.TableUtils.GetColumnValues(ResponseRateTableName, 8);
+    for(var i = 0; i < colValues.length; ++i) {
+      hc.SetCellValue(i, colValues[i].Value);
+    }
   }
 }

@@ -9,27 +9,32 @@ class VerbatimHitlist {
     _log = log;
   }
   
-  function AddHitlistColumns(hitlist) {
-    AddSegmentHitlistColumns(hitlist);
-    AddVerbatimHitlistColumns(hitlist);
+  function AddHitlistColumns() {
+    var segmentColumns = AddSegmentHitlistColumns();
+    var verbatimColumns = AddVerbatimHitlistColumns();
+    return segmentColumns.concat(verbatimColumns);
   }
   
-  private function AddSegmentHitlistColumns(hitlist) {
+  private function AddSegmentHitlistColumns() {
     var demographicQuestionIds = _parameterUtilities.GetParameterCodes("VERBATIM_DEMOGRAPHICS");
-    var demographicHitlistColumns = []
-    if(demographicQuestionIds.length > 0) {
+    var demographicHitlistColumns = [];
+    if(demographicQuestionIds != null && demographicQuestionIds.length > 0) {
       for(var i = 0; i < demographicQuestionIds.length; i++) {
-        hitlist.Columns.Add(CreateHitlistColumn(demographicQuestionIds[i]));
+        demographicHitlistColumns.push(CreateHitlistColumn(demographicQuestionIds[i]))
       }
     }
+    return demographicHitlistColumns;
   }
 
-  private function AddVerbatimHitlistColumns(hitlist) { 
+  private function AddVerbatimHitlistColumns() { 
     var verbatimQuestionIds = _parameterUtilities.GetParameterCodes("VERBATIM");
-    var verbatimHitlistColumns = []
-    for(var i = 0; i < verbatimQuestionIds.length; i++) {
-      hitlist.Columns.Add(CreateHitlistColumn(verbatimQuestionIds[i]));
+    var verbatimHitlistColumns = [];
+    if(verbatimQuestionIds != null) {
+      for(var i = 0; i < verbatimQuestionIds.length; i++) {
+        verbatimHitlistColumns.push(CreateHitlistColumn(verbatimQuestionIds[i]));
+      }
     }
+    return verbatimHitlistColumns;
   }
   
   private function CreateHitlistColumn(questionId) {

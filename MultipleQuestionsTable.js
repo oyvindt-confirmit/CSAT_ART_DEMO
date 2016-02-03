@@ -1,17 +1,21 @@
-public class IndividualQuestionsTable {
+public class MultipleQuestionsTable {
   private var _report;
   private var _table;
-  private var _variableId;
+  private var _variableIds;
   private var _question;
+  private var _questions;
   private var _metaData;
   private var _log;
   
-  function IndividualQuestionsTable(report, table, variableId, metaData, log) {
+  function MultipleQuestionsTable(report, table, variableIds, metaData, log) {
     _report = report;
     _table = table;
-    _variableId = variableId;
+    _variableIds = variableIds;
     _metaData = metaData;
-    _question = GetQuestion(variableId);
+    _questions = [];
+    for(var i = 0; i < variableIds.length; ++i) {
+      _questions.push(GetQuestion(variableIds[i])); 
+    }
     _log = log;
   }
   
@@ -30,15 +34,19 @@ public class IndividualQuestionsTable {
   }
   
   private function CreateRowExpression() {
-    var headerQuestionProperties = GetHeaderQuestionProperties();
-    var rowExpression = _variableId + '{' + headerQuestionProperties + '}';
-    return rowExpression;
+    var rowExpression = [];
+    for(var i = 0; i < _questions.length; ++i) {
+      var headerQuestionProperties = GetHeaderQuestionProperties(_questions[i]);
+      rowExpression.push(_variableIds[i] + '{' + headerQuestionProperties + '}');
+    }
+    return rowExpression.join("+");
   }
       
-  private function GetHeaderQuestionProperties() {
+  private function GetHeaderQuestionProperties(question) {
     var headerQuestionProperties = [];
-    headerQuestionProperties.push ("totals:true");
-    switch (_question.QuestionType) {
+    headerQuestionProperties.push("title:true");
+    headerQuestionProperties.push("totals:true");
+    switch (question.QuestionType) {
       case QuestionType.Multi:
         headerQuestionProperties.push("collapsed:true");
         break;
@@ -46,7 +54,10 @@ public class IndividualQuestionsTable {
         headerQuestionProperties.push("collapsed:false");
         break;
     }
-    if(QuestionProperties.HasScores(_question)) {
+    if(QuestionProperties.IsInCategory(question, "sort")) {
+      headerQuestionProperties.push("sort:sortEnabled,desc");
+    }
+    if(QuestionProperties.HasScores(question)) {
       headerQuestionProperties.push("statistics:avg,stdev");
     }
     return headerQuestionProperties.join(";");
@@ -77,11 +88,15 @@ public class IndividualQuestionsTable {
       default:
   	    answers = _question.Answers;  
     }
-    if(_question.QuestionId === "status") {  // Workaround because "not answered" is included in answer count, but not in table
-      return (answers.length);
-    }
-    else {
-      return (answers.length + 1);
+    return (answers.length + 1);
+  }
+  
+  function ApplySortingToRows() {
+    for(var j = 0; j < _table.RowHeaders.Count; j++) {
+      var rowHeader : Header = _table.RowHeaders[j];
+      if(rowHeader.Sorting.Direction === TableSortDirection.Descending) {
+        rowHeader.Sorting.Enabled = true;
+      }
     }
   }
 }

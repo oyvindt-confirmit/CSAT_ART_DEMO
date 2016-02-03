@@ -71,9 +71,9 @@ class AllQuestionsTable {
   function CreateSortInfo(sortPosition) {
     var sortInfo : SortInfo = new SortInfo();
     sortInfo.Enabled = true;
-    sortInfo.Direction = TableSortDirection.Descending;
-    sortInfo.SortByType = TableSortByType.Position;
-    sortInfo.Position = sortPosition;
+    //sortInfo.Direction = TableSortDirection.Descending;
+    //sortInfo.SortByType = TableSortByType.Position;
+    //sortInfo.Position = sortPosition;
     return sortInfo;
   }
 }

@@ -1,12 +1,14 @@
 class ResponseRateChart {
   private var _report;
   private var _chart;
-  private var _parameterUtilities;
+  private var _parameterValues;
+  private var _log;
  
-  function ResponseRateChart(report, chart, parameterUtilities) {
+  function ResponseRateChart(chart, report, parameterValues, log) {
     _report = report;
     _chart = chart;
-    _parameterUtilities = parameterUtilities;
+    _parameterValues = parameterValues;
+    _log = log;
   }
   
   function SetChartProperties() {
@@ -23,12 +25,11 @@ class ResponseRateChart {
     _chart.ChartArea.PrimaryAxisX.LabelStyle.Interval = interval;
     _chart.ChartArea.PrimaryAxisX.MajorTickMark.Interval = interval;
     _chart.ChartArea.PrimaryAxisX.LabelStyle.ShowEndLabels = true;
-    _chart.ChartArea.PrimaryAxisX.Maximum = rows.length-2
+    _chart.ChartArea.PrimaryAxisX.Maximum = rows.length - 2
   }
   
   private function SetShowLabels() {
-    var responseRateLabeld = _parameterUtilities.GetParameterString(Settings.ResponseRatePage.Labels);
-    if(responseRateLabeld == "2") {
+    if(_parameterValues.Labels && _parameterValues.Labels !== null && _parameterValues.Labels === "2") {
       _chart.Series.SeriesDefault.ShowLabelAsValue = true;
     }
     else {

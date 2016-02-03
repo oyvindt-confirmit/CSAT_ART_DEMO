@@ -77,9 +77,10 @@ class TrendChart {
             min = (min==null) ? score : Math.min(min, score); 
           }      
         }
-    	return min; 
+    	//return min;
+        return undefined;
       case "2":
-        return 0;
+        return undefined;
       case "0":
       case "3":
       case "4":
@@ -87,9 +88,9 @@ class TrendChart {
       case "6":
       case "7":
       case "8":
-        return 0; 
+        return undefined; 
       case "9":
-       	return -100;
+       	return undefined;
     }
   }
   
@@ -118,7 +119,8 @@ class TrendChart {
             max = (max==null) ? score : Math.max (max, score); 
           }      
         }
-    	return max; 
+    	//return max;
+        return undefined;
       case "3":
       case "4":
       case "5":
@@ -126,7 +128,7 @@ class TrendChart {
       case "7":
       case "8":
       case "9":
-        return 100; 
+        return undefined; 
     }
   }
   

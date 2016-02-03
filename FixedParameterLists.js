@@ -1,9 +1,11 @@
 class FixedParameterLists {
-  static function GetParameterValues(parameterName) { 
+  static function GetParameterValues(parameterName, log) { 
     switch (parameterName.toUpperCase())
     { 
       case "BASE":
         return GetBaseOptions();
+      case "CROSSTAB_INDIVIDUAL_SCORES":
+        return GetCrosstabIndividualScoresOptions();          
       case "CROSSTAB_TRENDING":
       case 'SCORECARD_TRENDING':
         return GetTrendingOptions();
@@ -28,7 +30,7 @@ class FixedParameterLists {
       case "TRENDPAGE_INTERVAL":
         return GetTrendPageInterval();
       case 'TRENDPAGE_STATISTIC':
-        return GetTrendPageStatistic();
+        return GetTrendPageStatistic(log);
       case 'TRENDPAGE_UNIT':
         return GetTrendPageUnit();
     }
@@ -38,6 +40,13 @@ class FixedParameterLists {
    	return [
       {Code: '1', Label: 'Count: On', N: true, Percent: true},
       {Code: '2', Label: 'Count: Off', N: false, Percent: true}
+   	];
+  }
+  
+  private static function GetCrosstabIndividualScoresOptions() {
+    return [
+      {Code: '1', Label: 'Individual Scores: On'},
+      {Code: '2', Label: 'Individual Scores: Off'}
    	];
   }
 
@@ -78,13 +87,20 @@ class FixedParameterLists {
       {Code: "8", Label: "Bottom 1 %"},
       {Code: "5", Label: "Bottom 2 %"},
       {Code: "6", Label: "Bottom 3 %"},
-      {Code: "9", Label: "NPS &reg;"}
+      {Code: "9", Label: "NPS®"}
     ]; 
     if(Config.RangeGaps !== null && Config.RangeGaps.length > 0) {
       var rangeGapBaseId = 100;
       for(var i = 0; i < Config.RangeGaps.length; ++i) {
         var id = rangeGapBaseId + i;
         fixedStatistics.push({Code: id, Label: Config.RangeGaps[i].Label});
+      }
+    }
+    if(Config.Ranges !== null && Config.Ranges.length > 0) {
+      var rangeBaseId = 200;
+      for(var j = 0; j < Config.Ranges.length; ++j) {
+        var id = rangeBaseId + j;
+        fixedStatistics.push({Code: id, Label: Config.Ranges[j].Label});
       }
     }
     return fixedStatistics;
@@ -163,19 +179,34 @@ class FixedParameterLists {
           ];
   }
 
-  static function GetTrendPageStatistic() {
-    return [
-      {Code: "0", Label: "Count"},
-      {Code: "1", Label: "Average"},
-      {Code: "2", Label: "St. Dev."},
-      {Code: "7", Label: "Top 1 %"},
-      {Code: "3", Label: "Top 2 %"},
-      {Code: "4", Label: "Top 3 %"},
-      {Code: "8", Label: "Bottom 1 %"},
-      {Code: "5", Label: "Bottom 2 %"},
-      {Code: "6", Label: "Bottom 3 %"},
-      {Code: "9", Label: "NPS &reg;"}
-    ];
+  static function GetTrendPageStatistic(log) { 
+    var fixedStatistics =  [
+      {Code: 0, Label: "Count"},
+      {Code: 1, Label: "Average"},
+      {Code: 2, Label: "St. Dev."},
+      {Code: 7, Label: "Top 1 %"},
+      {Code: 3, Label: "Top 2 %"},
+      {Code: 4, Label: "Top 3 %"},
+      {Code: 8, Label: "Bottom 1 %"},
+      {Code: 5, Label: "Bottom 2 %"},
+      {Code: 6, Label: "Bottom 3 %"},
+      {Code: 9, Label: "NPS®"}
+    ]; 
+    if(Config.RangeGaps !== null && Config.RangeGaps.length > 0) {
+      var rangeGapBaseId = 100;
+      for(var i = 0; i < Config.RangeGaps.length; ++i) {
+        var id = rangeGapBaseId + i;
+        fixedStatistics.push({Code: id, Label: Config.RangeGaps[i].Label});
+      }
+    }
+    if(Config.Ranges !== null && Config.Ranges.length > 0) {
+      var rangeBaseId = 200;
+      for(var j = 0; j < Config.Ranges.length; ++j) {
+        var id = rangeBaseId + j;
+        fixedStatistics.push({Code: id, Label: Config.Ranges[j].Label});
+      }
+    }
+    return fixedStatistics;
   }
 
   static function GetTrendPageUnit() {

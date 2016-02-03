@@ -1,15 +1,24 @@
 class ParameterNavigation {
   
   private var _report;
-  private var _state;
   private var _parameterUtilities;
   private var _log;
   
-  function ParameterNavigation(report, state, parameterUtilities, log) {
+  function ParameterNavigation(report, parameterUtilities, log) {
     _report = report;
-    _state = state;
     _parameterUtilities = parameterUtilities;
     _log = log;
+  }
+  
+  function SetUpPreviousNextNavigation(page, parameterName) {
+    switch(page.SubmitSource) {
+      case "Next":
+	    NextParameterValue(Config.DS_Main, parameterName);
+        break;    
+      case "Previous":
+	    PreviousParameterValue(Config.DS_Main, parameterName);
+        break;
+    }
   }
   
   function NextParameterValue(ds, parameterName) {
