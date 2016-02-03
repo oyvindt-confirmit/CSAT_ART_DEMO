@@ -12,6 +12,7 @@ class AllQuestionsTable {
   }
   
   function CreateColumnHeaderSegment() {
+	_log.LogDebug("test");
     var headerSegment : HeaderSegment = new HeaderSegment();
     var label : Label = new Label();
     label.Texts.Add(new LanguageText(9, "Total"));
